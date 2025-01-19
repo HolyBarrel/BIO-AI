@@ -1,4 +1,5 @@
 use rand::Rng;
+use crate::params::{KS_CAPACITY, WEIGHT_CAPACITY};
 
 /**
  * Individual struct for each of the knapsack problem population members
@@ -26,10 +27,6 @@ pub struct Item {
  * Implementation of the Individual struct
  */
 impl Individual {
-
-    const WEIGHT_CAPACITY: i32 = 280785;
-    const KS_CAPACITY: usize = 500;
-
     /**
      * Constructor for Individual which generates a random set of genes
      */
@@ -45,11 +42,11 @@ impl Individual {
      * Generate a random set of genes for the individual
      * Private function only used in the constructor
      */
-    fn generate_random_genes() -> [u8; Self::KS_CAPACITY] {
-        let mut genes = [0; Self::KS_CAPACITY];
+    fn generate_random_genes() -> [u8; KS_CAPACITY] {
+        let mut genes = [0; KS_CAPACITY];
         let mut rng = rand::thread_rng();
 
-        for i in 0..Self::KS_CAPACITY {
+        for i in 0..KS_CAPACITY {
             genes[i] = rng.gen_range(0..=1);
         }
 
@@ -73,9 +70,9 @@ impl Individual {
         }
 
         // Penalize solutions that exceed the weight capacity
-        if total_weight > Self::WEIGHT_CAPACITY {
+        if total_weight > WEIGHT_CAPACITY {
             // The penalty is the amount by which the weight exceeds the capacity
-            let penalty = (total_weight - Self::WEIGHT_CAPACITY) as f64;
+            let penalty = (total_weight - WEIGHT_CAPACITY) as f64;
             // The fitness is the total value minus the penalty, and 0 if negative
             self.fitness = (total_value as f64 - penalty).max(0.0);
         } else {

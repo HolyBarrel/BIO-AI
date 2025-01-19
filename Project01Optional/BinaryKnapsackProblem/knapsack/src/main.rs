@@ -1,4 +1,5 @@
 mod utils;
+mod params;
 mod individual;
 mod population;
 
@@ -6,10 +7,10 @@ use std::error::Error;
 use crate::utils::read_csv;
 use crate::individual::Item;
 use crate::population::Population;
+use crate::params::POPULATION_SIZE;
+
 
 use plotters::prelude::*;
-
-const POPULATION_SIZE: usize = 500;
 
 /**
  * Main function to run the genetic algorithm for the knapsack problem

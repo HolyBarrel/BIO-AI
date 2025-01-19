@@ -2,6 +2,10 @@ use crate::individual::Individual;
 use crate::individual::Item;
 use rand::Rng;
 
+// Constant params to configure the enviroment ect
+use crate::params::{KS_CAPACITY, CROSSOVER_POINT, MUTATION_RATE};
+
+
 /**
  * Population struct for the knapsack problem
  * individuals: vector of individuals in the population
@@ -12,11 +16,6 @@ pub struct Population {
     pub individuals: Vec<Individual>, 
     pub size: usize,                 
 }
-
-// Constants for the genetic algorithm
-const KS_CAPACITY: usize = 500;
-const CROSSOVER_POINT: usize = KS_CAPACITY / 2;
-const MUTATION_RATE: f64 = 1.0/KS_CAPACITY as f64;
 
 /**
  * Implementation of the Population struct
