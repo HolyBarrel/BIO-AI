@@ -1,8 +1,9 @@
 use crate::params::{NUM_FEATURES};
-use crate::utils::compute_rmse_subset_direct;
+use crate::utils::compute_rmse_subset;
 use crate::Error;
 use std::collections::HashMap;
 use rand::{Rng, seq::SliceRandom};
+use rand::rngs::StdRng;
 
 /**
  * Individual struct for each of the knapsack problem population members
@@ -91,40 +92,21 @@ impl Individual {
             self.fitness = -9999.0; // big negative or handle differently
             return Ok(9999.0);
         }
-
-        // 4) Randomly pick ~10% of rows
-        let sample_size = ((nrows as f64) * 1.0).ceil() as usize;
-        let mut row_indices: Vec<usize> = (0..nrows).collect();
-        let mut rng = rand::thread_rng();
-        row_indices.shuffle(&mut rng);
-        row_indices.truncate(sample_size);
-
-        // 5) Build submatrix from (row_indices × active_cols)
-        //    Also build a partial target vector (same rows)
-        let mut partial_features = Vec::with_capacity(sample_size * active_cols.len());
-        let mut partial_targets = Vec::with_capacity(sample_size);
-
-        for &row in &row_indices {
-            // gather the columns
-            for &col in &active_cols {
-                // Flattened index in the original big feature_data
-                let idx = row * ncols + col;
-                partial_features.push(feature_data[idx]);
-            }
-            partial_targets.push(target_data[row]);
-        }
-
-        // 6) Fit a linear regression on this submatrix
-        let rmse = compute_rmse_subset_direct(
-            &partial_features,
-            &partial_targets,
-            sample_size,
-            active_cols.len(),
+        // 4) Fit a linear regression on this submatrix
+        let rmse = compute_rmse_subset(
+            &feature_data,
+            &target_data,
+            nrows,
+            ncols,
+            &active_cols
         )?;
 
-        // 7) Save negative rmse => so we maximize fitness
         self.fitness = -rmse;
-        // 8) Cache it if you want
+
+
+        // 5) Save negative rmse => so we maximize fitness
+
+        // 6) Cache it if you want
         cache.insert(subset_key, self.fitness);
 
         // Return the actual RMSE

@@ -61,7 +61,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     //---------------------------------------------
     // 4) GA Loop: run up to 30 generations
     //---------------------------------------------
-    for generation in 0..150 {
+    for generation in 0..100 {
         // Evaluate population -> each individual's fitness
         // (calls each individual's `calculate_fitness`, 
         //  which uses negative RMSE as the "fitness")
@@ -76,7 +76,7 @@ fn main() -> Result<(), Box<dyn Error>> {
             let current_rmse = -current_best_fitness; 
 
 
-            if generation % 10 == 0 {
+            if generation % 2 == 0 {
                 println!(
                     "Generation {}: Best RSME = {:.4}, Diversity = {:.2}, Size = {}",
                     generation,

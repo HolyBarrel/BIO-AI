@@ -3,6 +3,8 @@ use crate::individual::Individual;
 use crate::params::{NUM_FEATURES, CROSSOVER_POINT, MUTATION_RATE};
 use std::collections::HashMap;
 use crate::Error;
+use rand::prelude::IteratorRandom;
+
 
 #[derive(Debug, Clone)]
 pub struct Population {
@@ -35,14 +37,16 @@ impl Population {
         }
         Ok(())
     }
-
-    /// Single-point crossover
+    /// Single-point crossover with a random crossover point
     fn crossover(parent1: &Individual, parent2: &Individual) -> (Individual, Individual) {
+        let mut rng = rand::thread_rng(); // Create a random number generator
+        let crossover_point = rng.gen_range(0..NUM_FEATURES); // Generate a random crossover point
+        
         let mut child1 = Individual::new();
         let mut child2 = Individual::new();
-
+    
         for i in 0..NUM_FEATURES {
-            if i < CROSSOVER_POINT {
+            if i < crossover_point {
                 child1.genes[i] = parent1.genes[i];
                 child2.genes[i] = parent2.genes[i];
             } else {
@@ -52,6 +56,7 @@ impl Population {
         }
         (child1, child2)
     }
+    
 
     /// Pick two parents via rank selection
     fn pick_best_parents_rank(&self) -> (usize, usize) {
@@ -89,6 +94,33 @@ impl Population {
         let mut parent2 = pick_one(&sorted_indices, &probabilities, &mut rng);
         while parent1 == parent2 {
             parent2 = pick_one(&sorted_indices, &probabilities, &mut rng);
+        }
+        (parent1, parent2)
+    }
+
+    fn tournament_selection(&self, tournament_size: usize) -> usize {
+        let mut rng = rand::thread_rng();
+        let candidates: Vec<usize> = (0..self.size)
+            .choose_multiple(&mut rng, tournament_size); // No unwrap needed
+
+        // Find the candidate with the highest fitness
+        *candidates
+            .iter()
+            .max_by(|&&a, &&b| {
+                self.individuals[a]
+                    .fitness
+                    .partial_cmp(&self.individuals[b].fitness)
+                    .unwrap()
+            })
+            .unwrap()
+    }
+
+    /// Pair selection using tournament
+    fn pick_parents_tournament(&self, tournament_size: usize) -> (usize, usize) {
+        let parent1 = self.tournament_selection(tournament_size);
+        let mut parent2 = self.tournament_selection(tournament_size);
+        while parent1 == parent2 {
+            parent2 = self.tournament_selection(tournament_size);
         }
         (parent1, parent2)
     }
@@ -212,7 +244,7 @@ impl Population {
         
         // 2) Sort descending by fitness and keep top 10% as elites
         self.individuals.sort_by(|a, b| b.fitness.partial_cmp(&a.fitness).unwrap());
-        let elite_count = self.size / 10;
+        let elite_count = self.size / 20;
         let elites = self.individuals[..elite_count].to_vec();
     
         // 3) We'll build new population with these elites plus
@@ -223,19 +255,17 @@ impl Population {
         // 4) We do pairwise selection & crowding for the other 90%.
         //    We'll produce (size - elite_count) individuals in pairs.
         while new_population.len() < self.size {
-            // a) pick two parents
-            let (p1_idx, p2_idx) = self.pick_best_parents_rank();
+            // Choose parents using tournament selection
+            let (p1_idx, p2_idx) = self.pick_parents_tournament(3); // Set tournament size to 3
             let parent1 = self.individuals[p1_idx].clone();
             let parent2 = self.individuals[p2_idx].clone();
-            
-            // b) produce two children by crossover
+        
+            // Crossover and mutation
             let (mut child1, mut child2) = Self::crossover(&parent1, &parent2);
-            
-            // c) mutate those children
             Self::mutate_individual(&mut child1);
             Self::mutate_individual(&mut child2);
-    
-            // d) run crowding replacement => returns 2 survivors
+        
+            // Crowding replacement
             let (winner1, winner2) = Self::crowding_replacement(
                 &parent1,
                 &parent2,
@@ -245,10 +275,10 @@ impl Population {
                 target_data,
                 nrows,
                 ncols,
-                cache
+                cache,
             )?;
-    
-            // e) push them into new population (limit new_population to self.size)
+        
+            // Add winners to the new population
             if new_population.len() < self.size {
                 new_population.push(winner1);
             }
@@ -272,5 +302,6 @@ impl Population {
         self.individuals
             .iter()
             .max_by(|a, b| a.fitness.partial_cmp(&b.fitness).unwrap())
+        
     }
 }

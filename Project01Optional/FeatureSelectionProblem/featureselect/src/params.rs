@@ -10,4 +10,4 @@ pub const CROSSOVER_POINT: usize = (NUM_FEATURES + 1) / 2;
 pub const MUTATION_RATE: f64 = 1.0 / NUM_FEATURES as f64;
 
 /// The population size for the generations in the SGA
-pub const POPULATION_SIZE: usize = 100;
+pub const POPULATION_SIZE: usize = 12;
