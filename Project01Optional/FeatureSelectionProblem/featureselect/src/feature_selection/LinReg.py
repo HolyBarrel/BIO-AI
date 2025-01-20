@@ -8,6 +8,9 @@ class LinReg():
     def __init__(self):
         pass
 
+    def test(self):
+        print("TEST")
+
     def train(self, data, y):
         """Trains the Linear Regressor object
 
